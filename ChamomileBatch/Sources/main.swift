@@ -1,7 +1,9 @@
 import Foundation
+import Dispatch
 import PerfectLib
 import MySQL
 import PerfectHTTP
+import APIKit
 
 let env = ProcessInfo.processInfo.environment
 let testHost = env["DB_HOST"]
@@ -37,3 +39,13 @@ func useMysql() {
 print("Hello, world!")
 useMysql()
 
+let request = HogeRequest()
+
+let semaphore = DispatchSemaphore(value: 0)
+
+Session.send(request) { result in
+    print(result)
+    semaphore.signal()
+}
+print("wait")
+semaphore.wait()
