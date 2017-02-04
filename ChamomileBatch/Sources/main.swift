@@ -38,7 +38,7 @@ func useMysql() {
 print("Hello, world!")
 useMysql()
 
-let request = NicovideoAPI.SearchVideosRequest(q: "初音ミク", targets: "title", fields: "title", filters: nil, _sort: "-viewCounter", _offset: nil, _limit: nil, _context: "net.terminal-end.Chamomile")
+let request = NicovideoAPI.SearchRequest(service: .video, q: "初音ミク", targets: "title", fields: "title", filters: nil, _sort: "-viewCounter", _offset: nil, _limit: nil, _context: "net.terminal-end.Chamomile")
 
 var keepAlive = true
 let runLoop = RunLoop.current
