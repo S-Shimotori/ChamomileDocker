@@ -1,5 +1,4 @@
 import Foundation
-import Dispatch
 import PerfectLib
 import MySQL
 import PerfectHTTP
@@ -39,13 +38,15 @@ func useMysql() {
 print("Hello, world!")
 useMysql()
 
-let request = HogeRequest()
+let request = NicovideoAPI.SearchVideosRequest(q: "初音ミク", targets: "title", fields: "title", filters: nil, _sort: "-viewCounter", _offset: nil, _limit: nil, _context: "net.terminal-end.Chamomile")
 
-let semaphore = DispatchSemaphore(value: 0)
+var keepAlive = true
+let runLoop = RunLoop.current
 
 Session.send(request) { result in
     print(result)
-    semaphore.signal()
+    keepAlive = false
 }
-print("wait")
-semaphore.wait()
+while keepAlive && runLoop.run(mode: .defaultRunLoopMode, before: Date(timeIntervalSinceNow: 0.1)) {
+}
+
