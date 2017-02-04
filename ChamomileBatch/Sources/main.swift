@@ -2,6 +2,7 @@ import Foundation
 import PerfectLib
 import MySQL
 import PerfectHTTP
+import APIKit
 
 let env = ProcessInfo.processInfo.environment
 let testHost = env["DB_HOST"]
@@ -36,4 +37,16 @@ func useMysql() {
 
 print("Hello, world!")
 useMysql()
+
+let request = NicovideoAPI.SearchVideosRequest(q: "初音ミク", targets: "title", fields: "title", filters: nil, _sort: "-viewCounter", _offset: nil, _limit: nil, _context: "net.terminal-end.Chamomile")
+
+var keepAlive = true
+let runLoop = RunLoop.current
+
+Session.send(request) { result in
+    print(result)
+    keepAlive = false
+}
+while keepAlive && runLoop.run(mode: .defaultRunLoopMode, before: Date(timeIntervalSinceNow: 0.1)) {
+}
 
