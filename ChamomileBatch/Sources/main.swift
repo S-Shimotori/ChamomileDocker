@@ -1,42 +1,43 @@
 import Foundation
-import PerfectLib
-import MySQL
-import PerfectHTTP
 import APIKit
+import SwiftKnex
 
-let env = ProcessInfo.processInfo.environment
-let testHost = env["DB_HOST"]
-let testUser = env["DB_USER"]
-let testPassword = env["DB_PASS"]
-let testPort = UInt32(env["DB_PORT"]!)!
+let environment = ProcessInfo.processInfo.environment
+let dbHost = environment["DB_HOST"]!
+let dbUser = environment["DB_USER"]!
+let dbPassword = environment["DB_PASS"]!
+let dbPort = UInt(environment["DB_PORT"]!)!
 
-let testSchema = "nicovideo"
+let dbName = "nicovideo"
+let videosTableName = "videos"
 
-let dataMysql = MySQL()
+let config = KnexConfig(
+   host: dbHost,
+   port: dbPort,
+   user: dbUser,
+   password: dbPassword,
+   database: dbName,
+   isShowSQLLog: true
+)
 
-func useMysql() {
-    guard dataMysql.connect(host: testHost, user: testUser, password: testPassword, port: testPort) else {
-        Log.info(message: "Failure connecting to data server \(testHost)")
-        return
-    }
-    defer {
-        dataMysql.close()
-    }
-    print("connected.")
-    guard dataMysql.selectDatabase(named: testSchema) && dataMysql.query(statement: "select * from users limit 1") else {
-        Log.info(message: "Failure: \(dataMysql.errorCode()) \(dataMysql.errorMessage())")
-        return
-    }
-    print("exec.")
-    let results = dataMysql.storeResults()
+do {
+    let connection = try KnexConnection(config: config)
+    let knex = connection.knex()
 
-    while let row = results?.next() {
-        print(row)
-    }
+    let create =  queryToCreateVideosTableMake(videosTableName)
+    try knex.execRaw(sql: create.toDDL())
+    let result = try knex.insert(into: videosTableName, values: [
+        "contentId": "sm1097445",
+        "title": "【初音ミク】みくみくにしてあげる♪【してやんよ】",
+        "viewCounter": 11904784
+    ])
+    let results = try knex.table(videosTableName).fetch()
+    print(results)
+    let drop = Drop(table: videosTableName)
+    try knex.execRaw(sql: drop.toDDL())
+} catch let error {
+    print(error)
 }
-
-print("Hello, world!")
-useMysql()
 
 let request = NicovideoAPI.SearchRequest(service: .video, q: "初音ミク", targets: "title", fields: "title", filters: nil, _sort: "-viewCounter", _offset: nil, _limit: nil, _context: "net.terminal-end.Chamomile")
 
