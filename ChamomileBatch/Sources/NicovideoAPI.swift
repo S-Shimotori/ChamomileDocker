@@ -62,7 +62,7 @@ final class NicovideoAPI {
 
     struct SearchResponse {
         let meta: Meta
-        let data: [Data]
+        let data: [NicovideoData]
 
         struct Meta {
             let status: Int
@@ -70,27 +70,6 @@ final class NicovideoAPI {
             let totalCount: Int
         }
 
-        struct Data {
-            let contentId: String?
-            let title: String?
-            let description: String?
-            let tags: [String]?
-            let categoryTags: [String]?
-            let viewCounter: Int?
-            let mylistCounter: Int?
-            let commentCounter: Int?
-            let startTime: String?
-            let thumbnailUrl: String?
-            let communityIcon: String?
-            let scoreTimeshiftReserved: Int?
-            let liveStatus: LiveStatus?
-
-            enum LiveStatus: String {
-                case past = "past"
-                case onair = "onair"
-                case reserved = "reserved"
-            }
-        }
     }
 
     struct SearchError: Error {
@@ -124,42 +103,4 @@ extension NicovideoAPI.SearchResponse.Meta: Decodable {
     }
 }
 
-extension NicovideoAPI.SearchResponse.Data: Decodable {
-    static func decode(_ json: JSON) -> Decoded<NicovideoAPI.SearchResponse.Data> {
-        let tags: Decoded<String?> = json <|? "tags"
-        let categoryTags: Decoded<String?> = json <|? "categoryTags"
-
-        let temp: Decoded<(Int?)->(Int?)->(String?)->(String?)->(String?)->(Int?)->(NicovideoAPI.SearchResponse.Data.LiveStatus?)->NicovideoAPI.SearchResponse.Data> =
-        curry(NicovideoAPI.SearchResponse.Data.init)
-            <^> json <|? "contentId"
-            <*> json <|? "title"
-            <*> json <|? "description"
-            <*> tags.map { $0?.components(separatedBy: ",") }
-            <*> categoryTags.map { $0?.components(separatedBy: ",") }
-            <*> json <|? "viewCounter"
-        return temp
-            <*> json <|? "mylistCounter"
-            <*> json <|? "commentCounter"
-            <*> json <|? "startTime"
-            <*> json <|? "thumbnailUrl"
-            <*> json <|? "communityIcon"
-            <*> json <|? "scoreTimeshiftReserved"
-            <*> json <|? "liveStatus"
-    }
-}
-
-extension NicovideoAPI.SearchResponse.Data.LiveStatus: Decodable {
-    static func decode(_ json: JSON) -> Decoded<NicovideoAPI.SearchResponse.Data.LiveStatus> {
-        switch json {
-        case let .string(s):
-            if let liveStatus = NicovideoAPI.SearchResponse.Data.LiveStatus(rawValue: s) {
-                return pure(liveStatus)
-            } else {
-                return .customError("got \(s), but expected LiveStatus")
-            }
-        default:
-            return .typeMismatch(expected: "String", actual: json)
-        }
-    }
-}
 
